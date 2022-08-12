@@ -5,19 +5,6 @@ def rotate(figure: 'list of tuples') -> 'list of tuples':
     return out_fig
 
 
-def empty_playground(dimensions=(10, 10)) -> '2d list':
-    m, n = dimensions
-    matrix = []
-    for _ in range(n):
-        row = ['-' for _ in range(m)]
-        matrix.append(row)
-    return matrix
-
-
-def to_str(matrix: '2d list') -> str:
-    return '\n'.join([' '.join(i) for i in matrix]) + '\n'
-
-
 def move(old_ind: 'list of tuples', direction='down', dimensions=(10, 10)) -> 'list of tuples':
     m, n = dimensions
     border = False
@@ -73,11 +60,18 @@ def finish(indexes: 'list of tuples'):
             return True
 
 
-def from_ind(indexes: 'list of tuples', dimensions=(10, 10)):
-    matrix = empty_playground(dimensions)
-    for coord in indexes:
-        matrix[coord[0]][coord[1]] = '0'
-    return matrix
+def display(indexes: 'list of tuples', dimensions=(10, 10)) -> '2d list':
+    m, n = dimensions
+    matrix = []
+    for i in range(n):
+        row = []
+        for j in range(m):
+            if (i, j) in indexes:
+                row.append('0')
+            else:
+                row.append('-')
+        matrix.append(row)
+    return '\n'.join([' '.join(i) for i in matrix]) + '\n'
 
 
 def main():
@@ -95,8 +89,7 @@ def main():
     figures = {'I': I, 'S': S, 'Z': Z, 'L': L, 'J': J, 'T': T, 'O': O}
 
     dimensions = tuple(int(i) for i in input().split())
-    empty = empty_playground(dimensions)
-    print(to_str(empty))
+    print(display([], dimensions))
 
     occupied = []
     game_over = False
@@ -123,7 +116,7 @@ def main():
                 occupied = [i for i in occupied if i in whole]
             figure[0] = []
 
-        print(to_str(from_ind(whole, dimensions)))
+        print(display(whole, dimensions))
         if game_over:
             print(game_over)
             break
