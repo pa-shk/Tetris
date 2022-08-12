@@ -1,11 +1,3 @@
-def decode(piece: '1d list', dimensions=(10, 10)) -> '2d list':
-    matrix = empty_playground(dimensions)
-    m, n = dimensions
-    for i in piece:
-        matrix[i // m][i % m] = '0'
-    return matrix
-
-
 def rotate(figure: '2d list') -> '2d list':
     out_fig = figure.copy()
     zero = out_fig.pop(0)
@@ -72,7 +64,7 @@ def on_border(indexes: 'list of tuples', in_matrix: '2d list'):
                 return True
 
 
-def merge(matrix_1, matrix_2):
+def merge(matrix_1: '2d list', matrix_2: '2d list') -> '2d list':
     matrix = [i.copy() for i in matrix_1]
     for i in range(len(matrix_2)):
         for j in range(len(matrix_2[0])):
@@ -84,17 +76,18 @@ def merge(matrix_1, matrix_2):
 def disappear(old_ocupp: 'list of tuples', dimensions=(10, 5)) -> 'list of tuples':
     m, _ = dimensions
     new_occup = []
-    for row_n in range(max(old_ocupp)[0] + 1):
-        if len([i for i in old_ocupp if i[0] == row_n]) == m:
-            full = row_n
-            for i in old_ocupp:
-                if i[0] == full:
-                    continue
-                elif i[0] < full:
-                    new_occup.append((i[0] + 1, i[1]))
-                else:
-                    new_occup.append((i[0], i[1]))
-            return new_occup
+    if old_ocupp:
+        for row_n in range(max(old_ocupp)[0] + 1):
+            if len([i for i in old_ocupp if i[0] == row_n]) == m:
+                full = row_n
+                for i in old_ocupp:
+                    if i[0] == full:
+                        continue
+                    elif i[0] < full:
+                        new_occup.append((i[0] + 1, i[1]))
+                    else:
+                        new_occup.append((i[0], i[1]))
+                return new_occup
     return old_ocupp
 
 
@@ -112,13 +105,14 @@ def from_ind(indexes: 'list of tuples', dim=(10, 10)):
 
 
 def main():
-    O = [[4, 14, 15, 5]]
-    I = [[4, 14, 24, 34], [3, 4, 5, 6]]
-    S = [[5, 4, 14, 13], [4, 14, 15, 25]]
-    Z = [[4, 5, 15, 16], [5, 15, 14, 24]]
-    L = [[4, 14, 24, 25], [5, 15, 14, 13], [4, 5, 15, 25], [6, 5, 4, 14]]
-    J = [[5, 15, 25, 24], [15, 5, 4, 3], [5, 4, 14, 24], [4, 14, 15, 16]]
-    T = [[4, 14, 24, 15], [4, 13, 14, 15], [5, 15, 25, 14], [4, 5, 6, 15]]
+    #  initial position indexes
+    O = [[(0, 4), (0, 5), (1, 4), (1, 5)]]
+    I = [[(0, 4), (1, 4), (2, 4), (3, 4)], [(0, 3), (0, 4), (0, 5), (0, 6)]]
+    S = [[(0, 4), (0, 5), (1, 3), (1, 4)], [(0, 4), (1, 4), (1, 5), (2, 5)]]
+    Z = [[(0, 4), (0, 5), (1, 5), (1, 6)], [(0, 5), (1, 4), (1, 5), (2, 4)]]
+    L = [[(0, 4), (1, 4), (2, 4), (2, 5)], [(0, 5), (1, 3), (1, 4), (1, 5)], [(0, 4), (0, 5), (1, 5), (2, 5)], [(0, 4), (0, 5), (0, 6), (1, 4)]]
+    J = [[(0, 5), (1, 5), (2, 4), (2, 5)], [(0, 3), (0, 4), (0, 5), (1, 5)], [(0, 4), (0, 5), (1, 4), (2, 4)], [(0, 4), (1, 4), (1, 5), (1, 6)]]
+    T = [[(0, 4), (1, 4), (1, 5), (2, 4)], [(0, 4), (1, 3), (1, 4), (1, 5)], [(0, 5), (1, 4), (1, 5), (2, 5)], [(0, 4), (0, 5), (0, 6), (1, 5)]]
     figures = {'I': I, 'S': S, 'Z': Z, 'L': L, 'J': J, 'T': T, 'O': O}
 
     dimensions = tuple(int(i) for i in input().split())
@@ -126,45 +120,40 @@ def main():
     print(to_str(empty))
 
     occupied = []
-    flag = False
-    decoded = [[]]
+    game_over = False
+    figure = None
 
     while True:
         comm = input()
         if comm == 'piece':
-            occupied.extend(get_indexes(decoded[0]))
+            if figure:
+                occupied.extend(get_indexes(figure[0]))
             curr_fig = figures[input()]
-            decoded = [decode(i, dimensions) for i in curr_fig]
-        elif comm == 'rotate' and not on_floor(decoded[0]) and not on_border(occupied, decoded[0]):
-            decoded = rotate(decoded)
-        elif comm in 'right_left' and not on_floor(decoded[0]) and not on_border(occupied, decoded[0]):
-            decoded = [move(i, direction=comm) for i in decoded]
-        elif comm == 'exit':
+            figure = [from_ind(i, dimensions) for i in curr_fig]
+        if comm == 'rotate' and not on_floor(figure[0]) and not on_border(occupied, figure[0]):
+            figure = rotate(figure)
+        if comm in 'right_left' and not on_floor(figure[0]) and not on_border(occupied, figure[0]):
+            figure = [move(i, direction=comm) for i in figure]
+        if comm == 'exit':
             break
-
-        curr_ind = get_indexes(decoded[0])
-        clean = curr_ind + occupied
-        break_ = False
+        whole = get_indexes(figure[0]) + occupied
         if comm == 'break':
-            clean = disappear(curr_ind + occupied, dimensions)
-            occupied = [i for i in occupied if i in clean]
-            clean = disappear(clean, dimensions)
-            occupied = [i for i in occupied if i in clean]
-            decoded[0] = []
-            break_ = True
+            for _ in range(dimensions[1]):
+                whole = disappear(whole, dimensions)
+                occupied = [i for i in occupied if i in whole]
+            figure[0] = []
 
-        print(to_str(from_ind(clean, dimensions)))
-        if flag:
-            print(flag)
+        print(to_str(from_ind(whole, dimensions)))
+        if game_over:
+            print(game_over)
             break
 
-        if not on_border(occupied, decoded[0]) and not break_:
-            decoded = [move(i) for i in decoded]
+        if not on_border(occupied, figure[0]) and figure[0]:
+            figure = [move(i) for i in figure]
 
-        if finish(get_indexes(decoded[0])):
-            flag = 'Game Over!'
+        if finish(get_indexes(figure[0])):
+            game_over = 'Game Over!'
 
 
 if __name__ == '__main__':
-    pass
     main()
