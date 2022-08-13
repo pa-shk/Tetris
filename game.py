@@ -12,8 +12,6 @@ def move(old_ind: 'list of tuples', direction='down', dimensions=(10, 10)) -> 'l
     for i in old_ind:
         if direction == 'down':
             new.append((i[0] + 1, i[1]))
-            if i[0] + 1 == n:
-                border = True
         if direction == 'right':
             new.append((i[0], i[1] + 1))
             if i[1] + 1 == m:
@@ -27,13 +25,11 @@ def move(old_ind: 'list of tuples', direction='down', dimensions=(10, 10)) -> 'l
     return new
 
 
-def on_floor(indexes, dimensions=(10, 10)):
-    return max([i[0] for i in indexes]) == dimensions[1]
-
-
-def on_border(occupied: 'list of tuples', piece: 'list of tuples'):
-    border = [(i[0] - 1, i[1]) for i in occupied]
-    return bool([i for i in piece if i in border])
+def border(occupied: 'list of tuples', piece: 'list of tuples', dimensions=(10, 10)):
+    m, n = dimensions
+    floor = [(n - 1, i) for i in range(m)]
+    above_piece = [(i[0] - 1, i[1]) for i in occupied]
+    return bool([i for i in piece if i in floor + above_piece])
 
 
 def disappear(old_ocupp: 'list of tuples', dimensions=(10, 10)) -> 'list of tuples':
@@ -54,13 +50,13 @@ def disappear(old_ocupp: 'list of tuples', dimensions=(10, 10)) -> 'list of tupl
     return old_ocupp
 
 
-def finish(indexes: 'list of tuples'):
+def is_finish(indexes: 'list of tuples'):
     for i in indexes:
         if i[0] == 0:
             return True
 
 
-def display(indexes: 'list of tuples', dimensions=(10, 10)) -> '2d list':
+def display(indexes: 'list of tuples', dimensions=(10, 10)) -> str:
     m, n = dimensions
     matrix = []
     for i in range(n):
@@ -75,7 +71,7 @@ def display(indexes: 'list of tuples', dimensions=(10, 10)) -> '2d list':
 
 
 def main():
-    #  initial position indexes
+    #   initial position indexes
     O = [[(0, 4), (0, 5), (1, 4), (1, 5)]]
     I = [[(0, 4), (1, 4), (2, 4), (3, 4)], [(0, 3), (0, 4), (0, 5), (0, 6)]]
     S = [[(0, 4), (0, 5), (1, 3), (1, 4)], [(0, 4), (1, 4), (1, 5), (2, 5)]]
@@ -94,6 +90,7 @@ def main():
     occupied = []
     game_over = False
     figure = None
+    stable = False
 
     while True:
         comm = input()
@@ -101,9 +98,9 @@ def main():
             if figure:
                 occupied.extend(figure[0])
             figure = [i for i in figures[input()]]
-        if comm == 'rotate' and not on_floor(figure[0], dimensions) and not on_border(occupied, figure[0]):
+        if comm == 'rotate' and not border(occupied, figure[0], dimensions):
             figure = rotate(figure)
-        if comm in 'right_left' and not on_floor(figure[0], dimensions) and not on_border(occupied, figure[0]):
+        if comm in 'right_left' and not stable:
             figure = [move(i, direction=comm, dimensions=dimensions) for i in figure]
         if comm == 'exit':
             break
@@ -114,19 +111,49 @@ def main():
             for _ in range(dimensions[1]):
                 whole = disappear(whole, dimensions)
                 occupied = [i for i in occupied if i in whole]
-            figure[0] = []
+            figure[0] = [i for i in figure[0] if i in whole]
 
         print(display(whole, dimensions))
+
         if game_over:
             print(game_over)
             break
 
-        if not on_border(occupied, figure[0]) and figure[0]:
+        stable = border(occupied, figure[0], dimensions)
+        if not stable:
             figure = [move(i, dimensions=dimensions) for i in figure]
 
-        if finish(figure[0]):
+        if is_finish(figure[0]):
             game_over = 'Game Over!'
 
 
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+
+
+# TODO
+
+O = [[(0, 4), (0, 5), (1, 4), (1, 5)]]
+I = [[(0, 4), (1, 4), (2, 4), (3, 4)], [(0, 3), (0, 4), (0, 5), (0, 6)]]
+S = [[(0, 4), (0, 5), (1, 3), (1, 4)], [(0, 4), (1, 4), (1, 5), (2, 5)]]
+Z = [[(0, 4), (0, 5), (1, 5), (1, 6)], [(0, 5), (1, 4), (1, 5), (2, 4)]]
+L = [[(0, 4), (1, 4), (2, 4), (2, 5)], [(0, 5), (1, 3), (1, 4), (1, 5)], [(0, 4), (0, 5), (1, 5), (2, 5)],
+     [(0, 4), (0, 5), (0, 6), (1, 4)]]
+J = [[(0, 5), (1, 5), (2, 4), (2, 5)], [(0, 3), (0, 4), (0, 5), (1, 5)], [(0, 4), (0, 5), (1, 4), (2, 4)],
+     [(0, 4), (1, 4), (1, 5), (1, 6)]]
+T = [[(0, 4), (1, 4), (1, 5), (2, 4)], [(0, 4), (1, 3), (1, 4), (1, 5)], [(0, 5), (1, 4), (1, 5), (2, 5)],
+     [(0, 4), (0, 5), (0, 6), (1, 5)]]
+figures = {'I': I, 'S': S, 'Z': Z, 'L': L, 'J': J, 'T': T, 'O': O}
+
+# for f in figures.values():
+#     #print(f)
+#     for i in f:
+#         print(display(i))
+
+#print(display([(0, 4), (0, 5), (1, 4), (1, 5)]))
