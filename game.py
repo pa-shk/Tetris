@@ -1,8 +1,11 @@
-def rotate(figure: 'list of tuples') -> 'list of tuples':
-    out_fig = figure.copy()
-    zero = out_fig.pop(0)
-    out_fig.append(zero)
-    return out_fig
+def rotate(figure: 'list of tuples', occupied):
+    intersect = [i for i in figure[1] if i in occupied]
+    if not intersect:
+        out_fig = figure.copy()
+        zero = out_fig.pop(0)
+        out_fig.append(zero)
+        return out_fig
+    return figure
 
 
 def move(old_ind: 'list of tuples', direction='down', dimensions=(10, 10)) -> 'list of tuples':
@@ -70,20 +73,31 @@ def display(indexes: 'list of tuples', dimensions=(10, 10)) -> str:
     return '\n'.join([' '.join(i) for i in matrix]) + '\n'
 
 
-def main():
-    #   initial position indexes
-    O = [[(0, 4), (0, 5), (1, 4), (1, 5)]]
-    I = [[(0, 4), (1, 4), (2, 4), (3, 4)], [(0, 3), (0, 4), (0, 5), (0, 6)]]
-    S = [[(0, 4), (0, 5), (1, 3), (1, 4)], [(0, 4), (1, 4), (1, 5), (2, 5)]]
-    Z = [[(0, 4), (0, 5), (1, 5), (1, 6)], [(0, 5), (1, 4), (1, 5), (2, 4)]]
-    L = [[(0, 4), (1, 4), (2, 4), (2, 5)], [(0, 5), (1, 3), (1, 4), (1, 5)], [(0, 4), (0, 5), (1, 5), (2, 5)],
-         [(0, 4), (0, 5), (0, 6), (1, 4)]]
-    J = [[(0, 5), (1, 5), (2, 4), (2, 5)], [(0, 3), (0, 4), (0, 5), (1, 5)], [(0, 4), (0, 5), (1, 4), (2, 4)],
-         [(0, 4), (1, 4), (1, 5), (1, 6)]]
-    T = [[(0, 4), (1, 4), (1, 5), (2, 4)], [(0, 4), (1, 3), (1, 4), (1, 5)], [(0, 5), (1, 4), (1, 5), (2, 5)],
-         [(0, 4), (0, 5), (0, 6), (1, 5)]]
-    figures = {'I': I, 'S': S, 'Z': Z, 'L': L, 'J': J, 'T': T, 'O': O}
+def get_figure(figure_name: str, dimensions=(4, 4)) -> 'list of tuples':
+    m, _ = dimensions
+    O = [[(0, 1), (0, 2), (1, 1), (1, 2)]]
+    I = [[(0, 1), (1, 1), (2, 1), (3, 1)], [(0, 0), (0, 1), (0, 2), (0, 3)]]
+    S = [[(0, 1), (0, 2), (1, 0), (1, 1)], [(0, 1), (1, 1), (1, 2), (2, 2)]]
+    Z = [[(0, 1), (0, 2), (1, 2), (1, 3)], [(0, 2), (1, 1), (1, 2), (2, 1)]]
+    L = [[(0, 1), (1, 1), (2, 1), (2, 2)], [(0, 2), (1, 0), (1, 1), (1, 2)], [(0, 1), (0, 2), (1, 2), (2, 2)],
+         [(0, 1), (0, 2), (0, 3), (1, 1)]]
 
+    J = [[(0, 2), (1, 2), (2, 1), (2, 2)], [(0, 0), (0, 1), (0, 2), (1, 2)], [(0, 1), (0, 2), (1, 1), (2, 1)],
+         [(0, 1), (1, 1), (1, 2), (1, 3)]]
+
+    T = [[(0, 1), (1, 1), (1, 2), (2, 1)], [(0, 1), (1, 0), (1, 1), (1, 2)], [(0, 2), (1, 1), (1, 2), (2, 2)],
+         [(0, 1), (0, 2), (0, 3), (1, 2)]]
+
+    figures = {'I': I, 'S': S, 'Z': Z, 'L': L, 'J': J, 'T': T, 'O': O}
+    template = figures[figure_name]
+    scaled = []
+    shift = (m - 4) // 2
+    for piece in template:
+        scaled.append([(i[0], i[1] + shift) for i in piece])
+    return scaled
+
+
+def main():
     dimensions = tuple(int(i) for i in input().split())
     print(display([], dimensions))
 
@@ -97,9 +111,9 @@ def main():
         if comm == 'piece':
             if figure:
                 occupied.extend(figure[0])
-            figure = [i for i in figures[input()]]
-        if comm == 'rotate' and not border(occupied, figure[0], dimensions):
-            figure = rotate(figure)
+            figure = [i for i in get_figure(input(), dimensions)]
+        if comm == 'rotate' and not stable:
+            figure = rotate(figure, occupied)
         if comm in 'right_left' and not stable:
             figure = [move(i, direction=comm, dimensions=dimensions) for i in figure]
         if comm == 'exit':
@@ -129,31 +143,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-# TODO
-
-O = [[(0, 4), (0, 5), (1, 4), (1, 5)]]
-I = [[(0, 4), (1, 4), (2, 4), (3, 4)], [(0, 3), (0, 4), (0, 5), (0, 6)]]
-S = [[(0, 4), (0, 5), (1, 3), (1, 4)], [(0, 4), (1, 4), (1, 5), (2, 5)]]
-Z = [[(0, 4), (0, 5), (1, 5), (1, 6)], [(0, 5), (1, 4), (1, 5), (2, 4)]]
-L = [[(0, 4), (1, 4), (2, 4), (2, 5)], [(0, 5), (1, 3), (1, 4), (1, 5)], [(0, 4), (0, 5), (1, 5), (2, 5)],
-     [(0, 4), (0, 5), (0, 6), (1, 4)]]
-J = [[(0, 5), (1, 5), (2, 4), (2, 5)], [(0, 3), (0, 4), (0, 5), (1, 5)], [(0, 4), (0, 5), (1, 4), (2, 4)],
-     [(0, 4), (1, 4), (1, 5), (1, 6)]]
-T = [[(0, 4), (1, 4), (1, 5), (2, 4)], [(0, 4), (1, 3), (1, 4), (1, 5)], [(0, 5), (1, 4), (1, 5), (2, 5)],
-     [(0, 4), (0, 5), (0, 6), (1, 5)]]
-figures = {'I': I, 'S': S, 'Z': Z, 'L': L, 'J': J, 'T': T, 'O': O}
-
-# for f in figures.values():
-#     #print(f)
-#     for i in f:
-#         print(display(i))
-
-#print(display([(0, 4), (0, 5), (1, 4), (1, 5)]))
