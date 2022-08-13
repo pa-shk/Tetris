@@ -11,20 +11,22 @@ def rotate(figure: 'list of tuples', occupied):
     return figure
 
 
-def move(old_ind: 'list of tuples', direction='down', dimensions=(10, 10)) -> 'list of tuples':
+def move(old_ind: 'list of tuples', occupied: 'list of tuples', direction='down', dimensions=(10, 10)) -> 'list of tuples':
     m, n = dimensions
     border = False
     new = []
     for i in old_ind:
         if direction == 'down':
             new.append((i[0] + 1, i[1]))
+            if (i[0] + 1, i[1]) in occupied:
+                border = True
         if direction in 'right6':
             new.append((i[0], i[1] + 1))
-            if i[1] + 1 == m:
+            if i[1] + 1 == m or (i[0] + 1, i[1]) in occupied:
                 border = True
         if direction in 'left4':
             new.append((i[0], i[1] - 1))
-            if i[1] - 1 < 0:
+            if i[1] - 1 < 0 or (i[0], i[1] - 1) in occupied:
                 border = True
     if border:
         return old_ind
@@ -101,74 +103,69 @@ def get_figure(figure_name: str, dimensions=(4, 4)) -> 'list of tuples':
 
 
 def main():
+    play = True
+    while play:
+        #dimensions = tuple(int(i) for i in input('Enter the size of playground. Ex: 10 10\n').split())
+        dimensions = (10, 10)
+        #print(display([], dimensions))
+        occupied = []
+        figure = None
+        stable = True
 
-    #dimensions = tuple(int(i) for i in input('Enter the size of playground. Ex: 10 10\n').split())
-    dimensions = (10, 10)
-    #print(display([], dimensions))
+        print('The game starts now')
+        is_new = True
 
-    occupied = []
-    game_over = False
-    figure = None
-    stable = True
+        while True:
+            if stable:
+                figure_name = random.choice(['I', 'S',  'Z', 'L', 'J', 'T',  'O'])
+                #figure_name = input().upper()
+                figure = [i for i in get_figure(figure_name, dimensions)]
+                stable = False
+                if not is_new:
+                    print('next')
+                is_new = False
 
-    print('The game starts now')
-    is_new = True
+            if not stable:
+                while True:
+                    whole = figure[0] + occupied
+                    stable = border(occupied, figure[0], dimensions)
+                    print(display(whole, dimensions))
+                    print(whole)
+                    if stable:
+                        occupied.extend(figure[0])
+                        print( 'Hit the floor')
 
+                        count = 0
+                        for _ in range(dimensions[1]):
+                            is_disapp, whole = disappear(whole, dimensions)
+                            occupied = [i for i in occupied if i in whole]
+                            if not is_disapp:
+                                break
+                            else:
+                                count += 1
+                        if count:
+                            print(count, 'rows are broken!')
+                            print(display(whole, dimensions))
+                        break
 
-    while True:
-        if stable:
-            figure_name = random.choice(['I', 'S',  'Z', 'L', 'J', 'T',  'O'])
-            figure = [i for i in get_figure(figure_name, dimensions)]
-            stable = False
-            if not is_new:
-                print('next')
-            is_new = False
-
-        if not stable:
-            while True:
-                whole = figure[0] + occupied
-                stable = border(occupied, figure[0], dimensions)
-                print(display(whole, dimensions))
-                print(whole)
-                if stable:
-                    occupied.extend(figure[0])
-                    print( 'Hit the floor')
-
-                    count = 0
-                    for _ in range(dimensions[1]):
-                        is_disapp, whole = disappear(whole, dimensions)
-                        occupied = [i for i in occupied if i in whole]
-                        if not is_disapp:
-                            break
-                        else:
-                            count += 1
-                    if count:
-                        print(count, 'rows are broken!')
-                        print(display(whole, dimensions))
-
-                    break
-
-
-                comm = input('Enter rotate, right or left\n').lower()
-                while not comm:
-                    print('Enter something!')
                     comm = input('Enter rotate, right or left\n').lower()
+                    while not comm:
+                        print('Enter something!')
+                        comm = input('Enter rotate, right or left\n').lower()
 
-                if comm in 'rotate5' and not stable:
-                    figure = rotate(figure, occupied)
-                if comm in 'rightleft46' and not stable:
-                    figure = [move(i, direction=comm, dimensions=dimensions) for i in figure]
+                    if comm in 'rotate5':
+                        figure = rotate(figure, occupied)
+                    if comm in 'rightleft46':
+                        figure = [move(i, occupied, direction=comm, dimensions=dimensions) for i in figure]
+                    figure = [move(i, occupied, dimensions=dimensions) for i in figure]
 
-                figure = [move(i, dimensions=dimensions) for i in figure]
-
-        game_over = is_finish(figure[0])
-        if game_over:
-                    print('Game Over!')
-                    break
-                    # TODO
-                    # again = input('Wonna play again?')
-                    # if again not in  'yes_ok':
-                    #     break
+            game_over = is_finish(figure[0])
+            if game_over:
+                print('Game Over!')
+                again = input('Wonna play again?')
+                if again not in  'yes_ok':
+                    play = False
+                break
 
 if __name__ == '__main__':
     main()#
