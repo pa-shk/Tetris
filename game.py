@@ -2,9 +2,11 @@ import random
 import time
 
 
-def rotate(figure: 'list of tuples', occupied):
+def rotate(figure: '2d list of tuples', occupied, dimensions=(10, 10)):
+    _, n = dimensions
     intersect = [i for i in figure[1] if i in occupied]
-    if not intersect:
+    border = [i for i in figure[1] if i[0] >= n]
+    if not intersect and not border:
         out_fig = figure.copy()
         zero = out_fig.pop(0)
         out_fig.append(zero)
@@ -19,8 +21,6 @@ def move(old_ind: 'list of tuples', occupied: 'list of tuples', direction='down'
     for i in old_ind:
         if direction == 'down':
             new.append((i[0] + 1, i[1]))
-            if (i[0] + 1, i[1]) in occupied:
-                border = True
         if direction in 'right6':
             new.append((i[0], i[1] + 1))
             if i[1] + 1 == m or (i[0] + 1, i[1]) in occupied:
@@ -34,7 +34,7 @@ def move(old_ind: 'list of tuples', occupied: 'list of tuples', direction='down'
     return new
 
 
-def border(occupied: 'list of tuples', piece: 'list of tuples', dimensions=(10, 10)):
+def at_border(occupied: 'list of tuples', piece: 'list of tuples', dimensions=(10, 10)):
     m, n = dimensions
     floor = [(n - 1, i) for i in range(m)]
     above_piece = [(i[0] - 1, i[1]) for i in occupied]
@@ -121,7 +121,7 @@ def main():
         while not  game_over:
             if stable:
                 figure_name = random.choice(['I', 'S',  'Z', 'L', 'J', 'T',  'O'])
-                #figure_name = input().upper()
+                figure_name = input('Enter figure').upper()
                 figure = [i for i in get_figure(figure_name, dimensions)]
                 stable = False
                 if not is_new:
@@ -131,7 +131,7 @@ def main():
             else:
                 while True:
                     whole = figure[0] + occupied
-                    stable = border(occupied, figure[0], dimensions)
+                    stable = at_border(occupied, figure[0], dimensions)
                     print(display(whole, dimensions))
                     with open('debag', 'w') as file:
                         print(whole, file=file)
@@ -158,12 +158,13 @@ def main():
                         print('Enter something!')
                         comm = input('Enter rotate, right or left\n').lower()
 
-                    if comm in 'rotate5':
-                        figure = rotate(figure, occupied)
+                    if comm in 'rotate5' and figure_name !=  'O':
+                        figure = rotate(figure, occupied, dimensions)
                     if comm in 'rightleft46':
                         figure = [move(i, occupied, direction=comm, dimensions=dimensions) for i in figure]
-                    figure = [move(i, occupied, dimensions=dimensions) for i in figure]
-                    moves += 1
+                    if not at_border(occupied,figure[0], dimensions):
+                        figure = [move(i, occupied, dimensions=dimensions) for i in figure]
+                        moves += 1
 
                 game_over = is_finish(figure[0])
                 if game_over:
