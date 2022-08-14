@@ -138,22 +138,19 @@ def main():
                 print('Next...')
                 time.sleep(1)
 
+            if stable:
                 figure_name = random.choice(['I', 'S', 'Z', 'L', 'J', 'T', 'O'])
                 # figure_name = input('Enter figure').upper()
                 figure = [i for i in get_figure(figure_name, dimensions)]
-                whole = figure[0] + occupied
-                display(whole, dimensions)
-                stable = False
-
-            elif stable and is_new:
-                figure_name = random.choice(['I', 'S', 'Z', 'L', 'J', 'T', 'O'])
-                # figure_name = input('Enter figure').upper()
-                figure = [i for i in get_figure(figure_name, dimensions)]
-                display(figure[0])
-                stable = False
                 is_new = False
 
-            else:
+            whole = figure[0] + occupied
+            stable = at_border(occupied, figure[0], dimensions)
+            with open('debag', 'w') as file:
+                print(whole, file=file)
+            display(whole, dimensions)
+
+            if not stable:
                 game_over = is_finish(occupied, figure[0], dimensions)
                 if game_over:
                     print('Game Over!')
@@ -174,12 +171,6 @@ def main():
 
                 figure = [move(i, occupied, dimensions=dimensions) for i in figure]
                 moves += 1
-
-                whole = figure[0] + occupied
-                stable = at_border(occupied, figure[0], dimensions)
-                with open('debag', 'w') as file:
-                    print(whole, file=file)
-                display(whole, dimensions)
 
 
 if __name__ == '__main__':
