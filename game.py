@@ -1,4 +1,5 @@
 import random
+import time
 
 
 def rotate(figure: 'list of tuples', occupied):
@@ -111,30 +112,32 @@ def main():
         occupied = []
         figure = None
         stable = True
-
-        print('The game starts now')
+        moves = 0
         is_new = True
+        game_over = False
+        print('The game starts now...')
+        time.sleep(0.5)
 
-        while True:
+        while not  game_over:
             if stable:
                 figure_name = random.choice(['I', 'S',  'Z', 'L', 'J', 'T',  'O'])
                 #figure_name = input().upper()
                 figure = [i for i in get_figure(figure_name, dimensions)]
                 stable = False
                 if not is_new:
-                    print('next')
+                    print('Next...')
+                time.sleep(1)
                 is_new = False
-
-            if not stable:
+            else:
                 while True:
                     whole = figure[0] + occupied
                     stable = border(occupied, figure[0], dimensions)
                     print(display(whole, dimensions))
-                    print(whole)
+                    with open('debag', 'w') as file:
+                        print(whole, file=file)
                     if stable:
                         occupied.extend(figure[0])
-                        print( 'Hit the floor')
-
+                        #print('Hit the border')
                         count = 0
                         for _ in range(dimensions[1]):
                             is_disapp, whole = disappear(whole, dimensions)
@@ -144,8 +147,10 @@ def main():
                             else:
                                 count += 1
                         if count:
-                            print(count, 'rows are broken!')
+                            message = 'rows are broken!' if count > 1 else 'row is broken!'
+                            print(count, message)
                             print(display(whole, dimensions))
+                            time.sleep(1.5)
                         break
 
                     comm = input('Enter rotate, right or left\n').lower()
@@ -158,19 +163,17 @@ def main():
                     if comm in 'rightleft46':
                         figure = [move(i, occupied, direction=comm, dimensions=dimensions) for i in figure]
                     figure = [move(i, occupied, dimensions=dimensions) for i in figure]
+                    moves += 1
 
-            game_over = is_finish(figure[0])
-            if game_over:
-                print('Game Over!')
-                again = input('Wonna play again?')
-                if again not in  'yes_ok':
-                    play = False
-                break
+                game_over = is_finish(figure[0])
+                if game_over:
+                    print('Game Over!')
+                    print(f"You've made {moves} moves")
+                    time.sleep(0.5)
+                    again = input('Wonna play again?\n')
+                    if again not in  'yes_ok':
+                        play = False
+
 
 if __name__ == '__main__':
-    main()#
-
-# f = [(0, 4), (1, 4), (1, 5), (2, 4), (8, 0), (8, 1), (9, 0), (9, 1), (8, 2), (8, 3), (9, 2), (9, 3), (8, 5), (8, 6), (9, 4), (9, 5), (7, 4), (7, 5), (7, 6), (8, 4), (6, 3), (6, 4), (7, 2), (7, 3), (8, 7), (8, 8), (9, 7), (9, 8), (5, 7), (5, 8), (6, 8), (7, 8), (3, 4), (4, 4), (5, 3), (5, 4)]
-#
-# print(disappear(f))
-# print(display(f))
+    main()
