@@ -2,7 +2,7 @@ import random
 import time
 
 
-def rotate(figure: '2d list of tuples', occupied, dimensions=(10, 10)):
+def rotate(figure: '2d list of tuples', occupied: 'list of tuples', dimensions=(10, 10)):
     _, n = dimensions
     intersect = [i for i in figure[1] if i in occupied]
     border = [i for i in figure[1] if i[0] >= n]
@@ -14,7 +14,8 @@ def rotate(figure: '2d list of tuples', occupied, dimensions=(10, 10)):
     return figure
 
 
-def move(old_ind: 'list of tuples', occupied: 'list of tuples', direction='down', dimensions=(10, 10)) -> 'list of tuples':
+def move(old_ind: 'list of tuples', occupied: 'list of tuples', direction='down',
+         dimensions=(10, 10)) -> 'list of tuples':
     m, n = dimensions
     border = False
     new = []
@@ -62,24 +63,10 @@ def disappear(old_ocupp: 'list of tuples', dimensions=(10, 10)):
 
 
 def is_finish(occupied: 'list of tuples', indexes: 'list of tuples', dimensions=(10, 10)):
-    border = at_border(occupied, indexes,  dimensions)
+    border = at_border(occupied, indexes, dimensions)
     for i in indexes:
         if i[0] == 0 and border:
             return True
-
-
-def display(indexes: 'list of tuples', dimensions=(10, 10)) -> str:
-    m, n = dimensions
-    matrix = []
-    for i in range(n):
-        row = []
-        for j in range(m):
-            if (i, j) in indexes:
-                row.append('0')
-            else:
-                row.append('-')
-        matrix.append(row)
-    return '\n'.join([' '.join(i) for i in matrix]) + '\n'
 
 
 def get_figure(figure_name: str, dimensions=(4, 4)) -> 'list of tuples':
@@ -104,12 +91,26 @@ def get_figure(figure_name: str, dimensions=(4, 4)) -> 'list of tuples':
     return scaled
 
 
+def display(indexes: 'list of tuples', dimensions=(10, 10)) -> str:
+    m, n = dimensions
+    matrix = []
+    for i in range(n):
+        row = []
+        for j in range(m):
+            if (i, j) in indexes:
+                row.append('0')
+            else:
+                row.append('-')
+        matrix.append(row)
+    print(*[' '.join(i) for i in matrix], sep='\n', end='\n\n')
+
+
 def main():
     play = True
     while play:
-        #dimensions = tuple(int(i) for i in input('Enter the size of playground. Ex: 10 10\n').split())
+        # dimensions = tuple(int(i) for i in input('Enter the size of playground. Ex: 10 10\n').split())
         dimensions = (10, 10)
-        #print(display([], dimensions))
+        # display([], dimensions))
         occupied = []
         stable = True
         moves = 0
@@ -118,40 +119,39 @@ def main():
         print('The game starts now...')
         time.sleep(0.5)
 
-        while not  game_over:
+        while not game_over:
             if stable and not is_new:
-                    occupied.extend(figure[0])
-                    #print('Hit the border')
-                    count = 0
-                    for _ in range(dimensions[1]):
-                        is_disapp, whole = disappear(whole, dimensions)
-                        occupied = [i for i in occupied if i in whole]
-                        if not is_disapp:
-                            break
-                        else:
-                            count += 1
-                    if count:
-                        message = 'rows are broken!' if count > 1 else 'row is broken!'
-                        print(count, message)
-                        print(display(whole, dimensions))
-                        time.sleep(1.5)
-                    print('Next...')
-                    time.sleep(1)
+                occupied.extend(figure[0])
+                count = 0
+                for _ in range(dimensions[1]):
+                    is_disapp, whole = disappear(whole, dimensions)
+                    occupied = [i for i in occupied if i in whole]
+                    if not is_disapp:
+                        break
+                    else:
+                        count += 1
+                if count:
+                    message = 'rows are broken!' if count > 1 else 'row is broken!'
+                    print(count, message)
+                    display(whole, dimensions)
+                    time.sleep(1.5)
+                print('Next...')
+                time.sleep(1)
 
-                    figure_name = random.choice(['I', 'S',  'Z', 'L', 'J', 'T',  'O'])
-                    #figure_name = input('Enter figure').upper()
-                    figure = [i for i in get_figure(figure_name, dimensions)]
-                    whole = figure[0] + occupied
-                    print(display(whole, dimensions))
-                    stable = False
+                figure_name = random.choice(['I', 'S', 'Z', 'L', 'J', 'T', 'O'])
+                # figure_name = input('Enter figure').upper()
+                figure = [i for i in get_figure(figure_name, dimensions)]
+                whole = figure[0] + occupied
+                display(whole, dimensions)
+                stable = False
 
             elif stable and is_new:
-                    figure_name = random.choice(['I', 'S',  'Z', 'L', 'J', 'T',  'O'])
-                    #figure_name = input('Enter figure').upper()
-                    figure = [i for i in get_figure(figure_name, dimensions)]
-                    print(display(figure[0]))
-                    stable = False
-                    is_new = False
+                figure_name = random.choice(['I', 'S', 'Z', 'L', 'J', 'T', 'O'])
+                # figure_name = input('Enter figure').upper()
+                figure = [i for i in get_figure(figure_name, dimensions)]
+                display(figure[0])
+                stable = False
+                is_new = False
 
             else:
                 game_over = is_finish(occupied, figure[0], dimensions)
@@ -159,15 +159,15 @@ def main():
                     print('Game Over!')
                     print(f"You've made {moves} moves")
                     time.sleep(0.5)
-                    again = input('Wonna play again?\n')
-                    if again not in  'yes_ok':
+                    again = input('Wanna play again?\n')
+                    if again not in 'yes_ok':
                         play = False
 
                 comm = input('Enter rotate(5), right(4) or left(6)\n').lower()
                 while not comm:
                     comm = input('Enter something!').lower()
 
-                if comm in 'rotate5' and figure_name !=  'O':
+                if comm in 'rotate5' and figure_name != 'O':
                     figure = rotate(figure, occupied, dimensions)
                 if comm in 'rightleft46':
                     figure = [move(i, occupied, direction=comm, dimensions=dimensions) for i in figure]
@@ -179,7 +179,7 @@ def main():
                 stable = at_border(occupied, figure[0], dimensions)
                 with open('debag', 'w') as file:
                     print(whole, file=file)
-                print(display(whole, dimensions))
+                display(whole, dimensions)
 
 
 if __name__ == '__main__':
