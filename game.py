@@ -150,16 +150,16 @@ def main():
                 print(whole, file=file)
             display(whole, dimensions)
 
-            if not stable:
-                game_over = is_finish(occupied, figure[0], dimensions)
-                if game_over:
-                    print('Game Over!')
-                    print(f"You've made {moves} moves")
-                    time.sleep(0.5)
-                    again = input('Wanna play again?\n')
-                    if again not in 'yes_ok':
-                        play = False
+            game_over = is_finish(occupied, figure[0], dimensions)
+            if game_over:
+                print('Game Over!')
+                print(f"You've made {moves} moves")
+                time.sleep(0.5)
+                again = input('Wanna play again?\n')
+                if again not in 'yes_ok':
+                    play = False
 
+            if not stable:
                 comm = input('Enter rotate(5), right(4) or left(6)\n').lower()
                 while not comm:
                     comm = input('Enter something!').lower()
