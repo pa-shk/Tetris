@@ -21,9 +21,11 @@ def move(old_ind: 'list of tuples', occupied: 'list of tuples', direction='down'
     for i in old_ind:
         if direction == 'down':
             new.append((i[0] + 1, i[1]))
+            if i[0] + 1 == n or (i[0] + 1, i[1]) in occupied:
+                border = True
         if direction in 'right6':
             new.append((i[0], i[1] + 1))
-            if i[1] + 1 == m or (i[0] + 1, i[1]) in occupied:
+            if i[1] + 1 == m or (i[0], i[1] + 1) in occupied:
                 border = True
         if direction in 'left4':
             new.append((i[0], i[1] - 1))
@@ -59,9 +61,10 @@ def disappear(old_ocupp: 'list of tuples', dimensions=(10, 10)):
     return False, old_ocupp
 
 
-def is_finish(indexes: 'list of tuples'):
+def is_finish(occupied: 'list of tuples', indexes: 'list of tuples', dimensions=(10, 10)):
+    border = at_border(occupied, indexes,  dimensions)
     for i in indexes:
-        if i[0] == 0:
+        if i[0] == 0 and border:
             return True
 
 
@@ -87,10 +90,8 @@ def get_figure(figure_name: str, dimensions=(4, 4)) -> 'list of tuples':
     Z = [[(0, 1), (0, 2), (1, 2), (1, 3)], [(0, 2), (1, 1), (1, 2), (2, 1)]]
     L = [[(0, 1), (1, 1), (2, 1), (2, 2)], [(0, 2), (1, 0), (1, 1), (1, 2)], [(0, 1), (0, 2), (1, 2), (2, 2)],
          [(0, 1), (0, 2), (0, 3), (1, 1)]]
-
     J = [[(0, 2), (1, 2), (2, 1), (2, 2)], [(0, 0), (0, 1), (0, 2), (1, 2)], [(0, 1), (0, 2), (1, 1), (2, 1)],
          [(0, 1), (1, 1), (1, 2), (1, 3)]]
-
     T = [[(0, 1), (1, 1), (1, 2), (2, 1)], [(0, 1), (1, 0), (1, 1), (1, 2)], [(0, 2), (1, 1), (1, 2), (2, 2)],
          [(0, 1), (0, 2), (0, 3), (1, 2)]]
 
@@ -110,7 +111,6 @@ def main():
         dimensions = (10, 10)
         #print(display([], dimensions))
         occupied = []
-        figure = None
         stable = True
         moves = 0
         is_new = True
@@ -119,54 +119,42 @@ def main():
         time.sleep(0.5)
 
         while not  game_over:
-            if stable:
-                figure_name = random.choice(['I', 'S',  'Z', 'L', 'J', 'T',  'O'])
-                figure_name = input('Enter figure').upper()
-                figure = [i for i in get_figure(figure_name, dimensions)]
-                stable = False
-                if not is_new:
+            if stable and not is_new:
+                    occupied.extend(figure[0])
+                    #print('Hit the border')
+                    count = 0
+                    for _ in range(dimensions[1]):
+                        is_disapp, whole = disappear(whole, dimensions)
+                        occupied = [i for i in occupied if i in whole]
+                        if not is_disapp:
+                            break
+                        else:
+                            count += 1
+                    if count:
+                        message = 'rows are broken!' if count > 1 else 'row is broken!'
+                        print(count, message)
+                        print(display(whole, dimensions))
+                        time.sleep(1.5)
                     print('Next...')
-                time.sleep(1)
-                is_new = False
-            else:
-                while True:
+                    time.sleep(1)
+
+                    figure_name = random.choice(['I', 'S',  'Z', 'L', 'J', 'T',  'O'])
+                    #figure_name = input('Enter figure').upper()
+                    figure = [i for i in get_figure(figure_name, dimensions)]
                     whole = figure[0] + occupied
-                    stable = at_border(occupied, figure[0], dimensions)
                     print(display(whole, dimensions))
-                    with open('debag', 'w') as file:
-                        print(whole, file=file)
-                    if stable:
-                        occupied.extend(figure[0])
-                        #print('Hit the border')
-                        count = 0
-                        for _ in range(dimensions[1]):
-                            is_disapp, whole = disappear(whole, dimensions)
-                            occupied = [i for i in occupied if i in whole]
-                            if not is_disapp:
-                                break
-                            else:
-                                count += 1
-                        if count:
-                            message = 'rows are broken!' if count > 1 else 'row is broken!'
-                            print(count, message)
-                            print(display(whole, dimensions))
-                            time.sleep(1.5)
-                        break
+                    stable = False
 
-                    comm = input('Enter rotate, right or left\n').lower()
-                    while not comm:
-                        print('Enter something!')
-                        comm = input('Enter rotate, right or left\n').lower()
+            elif stable and is_new:
+                    figure_name = random.choice(['I', 'S',  'Z', 'L', 'J', 'T',  'O'])
+                    #figure_name = input('Enter figure').upper()
+                    figure = [i for i in get_figure(figure_name, dimensions)]
+                    print(display(figure[0]))
+                    stable = False
+                    is_new = False
 
-                    if comm in 'rotate5' and figure_name !=  'O':
-                        figure = rotate(figure, occupied, dimensions)
-                    if comm in 'rightleft46':
-                        figure = [move(i, occupied, direction=comm, dimensions=dimensions) for i in figure]
-                    if not at_border(occupied,figure[0], dimensions):
-                        figure = [move(i, occupied, dimensions=dimensions) for i in figure]
-                        moves += 1
-
-                game_over = is_finish(figure[0])
+            else:
+                game_over = is_finish(occupied, figure[0], dimensions)
                 if game_over:
                     print('Game Over!')
                     print(f"You've made {moves} moves")
@@ -174,6 +162,24 @@ def main():
                     again = input('Wonna play again?\n')
                     if again not in  'yes_ok':
                         play = False
+
+                comm = input('Enter rotate(5), right(4) or left(6)\n').lower()
+                while not comm:
+                    comm = input('Enter something!').lower()
+
+                if comm in 'rotate5' and figure_name !=  'O':
+                    figure = rotate(figure, occupied, dimensions)
+                if comm in 'rightleft46':
+                    figure = [move(i, occupied, direction=comm, dimensions=dimensions) for i in figure]
+
+                figure = [move(i, occupied, dimensions=dimensions) for i in figure]
+                moves += 1
+
+                whole = figure[0] + occupied
+                stable = at_border(occupied, figure[0], dimensions)
+                with open('debag', 'w') as file:
+                    print(whole, file=file)
+                print(display(whole, dimensions))
 
 
 if __name__ == '__main__':
