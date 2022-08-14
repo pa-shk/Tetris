@@ -1,5 +1,6 @@
 import random
 import time
+import json
 
 
 def rotate(figure: '2d list of tuples', occupied: 'list of tuples', dimensions=(10, 10)):
@@ -91,7 +92,7 @@ def get_figure(figure_name: str, dimensions=(4, 4)) -> 'list of tuples':
     return scaled
 
 
-def display(indexes: 'list of tuples', dimensions=(10, 10)) -> str:
+def display(indexes: 'list of tuples', dimensions=(10, 10)) -> None:
     m, n = dimensions
     matrix = []
     for i in range(n):
@@ -105,12 +106,60 @@ def display(indexes: 'list of tuples', dimensions=(10, 10)) -> str:
     print(*[' '.join(i) for i in matrix], sep='\n', end='\n\n')
 
 
+def get_cash() -> '(bool, dict)':
+    try:
+        with open('cash') as file:
+            cash = json.load(file)
+        return True, cash
+    except FileNotFoundError:
+        with open('cash', 'w') as file:
+            cash = {'dimensions': (10, 10), 'progress': []}
+            json.dump(cash, file)
+    return False, cash
+
+
+def check_dimensions(user_input: str)-> 'bool or tuple':
+    try:
+        m, n = [int(i) for i in user_input.split()]
+        if all([m > 4, n > 4, m < 21, n < 21]):
+            return (m, n)
+    except ValueError:
+        return False
+    return False
+
+
+
 def main():
+    saved, cash = get_cash()
+
+    if saved:
+        print('Your saved settings loaded')
+    else:
+        print('Default settings loaded.')
+
+    dimensions = cash['dimensions']
+    progress = cash['progress']
+
+    print(f'''You play with {dimensions[0]} X {dimensions[1]} board
+Max score {max([*progress, 0])} moves so far''')
+    change = input('Wanna change settings?\n')
+
+    if change.lower() in 'yesok':
+        user_dimensions = check_dimensions(input('Enter dimensions. Ex: 10 10\n'))
+        if user_dimensions:
+            cash['dimensions'] = user_dimensions
+        else:
+            print('''Wrong dimensions. 
+Should be 2 number. No more than 20 and no less that 5 each''')
+        if input('Wanna reset progress\n').lower() in 'yesok':
+            cash['progress'] = []
+        dimensions = cash['dimensions']
+        progress = cash['progress']
+
     play = True
     while play:
-        # dimensions = tuple(int(i) for i in input('Enter the size of playground. Ex: 10 10\n').split())
-        dimensions = (10, 10)
-        # display([], dimensions))
+        with open('cash', 'w') as file:
+            json.dump(cash, file)
         occupied = []
         stable = True
         moves = 0
@@ -154,13 +203,18 @@ def main():
             if game_over:
                 print('Game Over!')
                 print(f"You've made {moves} moves")
+                if progress and moves > max(progress):
+                    print("It's your best score!")
+                elif progress and moves > progress[-1]:
+                    print("It's an improvment!")
                 time.sleep(0.5)
+                progress.append(moves)
                 again = input('Wanna play again?\n')
-                if again not in 'yes_ok':
+                if again not in 'yesok':
                     play = False
 
             if not stable:
-                comm = input('Enter rotate(5), right(4) or left(6)\n').lower()
+                comm = input('Enter rotate(5), right(4), left(6) or down(2)\n').lower()
                 while not comm:
                     comm = input('Enter something!').lower()
 
